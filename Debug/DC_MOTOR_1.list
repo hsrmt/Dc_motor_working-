@@ -409,7 +409,7 @@ int main(void)
  8000510:	4851      	ldr	r0, [pc, #324]	; (8000658 <main+0x180>)
  8000512:	f001 fb17 	bl	8001b44 <HAL_TIM_PWM_Start>
     /* USER CODE END WHILE */
-
+//testing
     /* USER CODE BEGIN 3 */
 	  //Change direction of motors anti clock wise
 
