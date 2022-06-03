@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "stm32f4xx_hal.h"
 #include "stdbool.h"
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -41,15 +42,24 @@
 
 /* Private variables ---------------------------------------------------------*/
  TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim5;
+
+UART_HandleTypeDef huart6;
 
 /* USER CODE BEGIN PV */
- bool tempVar,buttonone,buttontwo,buttonthree,clockwise=true;
+int i=1500;
+uint8_t a;
+char rx_buffer[50],tx_buffer[50];
+ bool goingforward,buttonone,buttontwo,buttonthree,clockwise=true;
+ bool led_state=false;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_USART6_UART_Init(void);
+static void MX_TIM5_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -88,6 +98,8 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_TIM2_Init();
+  MX_USART6_UART_Init();
+  MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_GPIO_WritePin(GPIOA,A1_Pin,GPIO_PIN_SET);   // Start first motor clock wise rotation
@@ -97,6 +109,7 @@ int main(void)
   //HAL_GPIO_WritePin(GPIOA,A4_Pin,GPIO_PIN_RESET);
   HAL_TIM_Base_Start(&htim2);               //Initialize stm32 timer 3
   HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim5,TIM_CHANNEL_1);
   //HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_2	);  //PB1 Start pwm first motor  100% duty cycle//PB0 Start pwm second motor 100% duty cycle
   /* USER CODE END 2 */
 
@@ -105,33 +118,68 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-//testing
+
     /* USER CODE BEGIN 3 */
 	  //Change direction of motors anti clock wise
-
-if(HAL_GPIO_ReadPin(B9_GPIO_Port,B9_Pin) && tempVar)
+HAL_UART_Receive(&huart6, (uint8_t*)rx_buffer, 50, 500);
+if(rx_buffer[0] == 'F')
 {
 
-
-
-
-	//__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_1,100);
-
-
-	tempVar=false;
-
-	/*HAL_GPIO_TogglePin(GPIOA,A3_Pin);
-	HAL_Delay(3000); //Delay for 3 seconds to stop motor properly
-	HAL_GPIO_TogglePin(GPIOA,A4_Pin);*/
+if(!goingforward)
+{
+	goingforward=true;
+	HAL_GPIO_TogglePin(GPIOA,A1_Pin);
+	HAL_Delay(100); //Delay for 3 seconds to stop motor properly
+	HAL_GPIO_TogglePin(GPIOA,A2_Pin);
 }
-else if(HAL_GPIO_ReadPin(B9_GPIO_Port, B9_Pin)==GPIO_PIN_RESET && tempVar == false)
+
+HAL_UART_Transmit(&huart6,(uint8_t*)tx_buffer,sprintf(tx_buffer,"Led is on\n"),500);
+
+}
+else if(rx_buffer[0] == 'B')
 	  {
+	if(goingforward)
+	{
 	HAL_GPIO_TogglePin(GPIOA,A1_Pin);
 	HAL_Delay(100); //Delay for 3 seconds to stop motor properly
 	HAL_GPIO_TogglePin(GPIOA,A2_Pin);
 
-tempVar=true;
-clockwise = !clockwise;
+	goingforward=false;
+	}
+	  HAL_UART_Transmit(&huart6,(uint8_t*)tx_buffer,sprintf(tx_buffer,"Led is off\n"),500);
+
+}
+
+else if(rx_buffer[0] == 'L')
+{
+	 //for (i=500;i<=2500;i++)
+	 i+=20;
+		  __HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_1,i);
+		  HAL_Delay(.1);
+	 // }
+	  if(led_state!=true)
+	  HAL_UART_Transmit(&huart6,(uint8_t*)tx_buffer,sprintf(tx_buffer,"Led is on\n"),500);
+	  led_state = true;
+	  for(a=0;a<50;a++)
+	  {
+		  rx_buffer[a]=0;
+	  }
+}
+else if(rx_buffer[0]=='R') {
+	// for (i=2500;i>=500;i--)
+	 // {
+	  	 i-=20;
+		  __HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_1,i);
+		  HAL_Delay(.01);
+		  //testing
+	 // }
+	  if(led_state!=false)
+	  HAL_UART_Transmit(&huart6,(uint8_t*)tx_buffer,sprintf(tx_buffer," Led is off\n"),500);
+	  led_state = false;
+	  for(a=0;a<50;a++)
+	  {
+		  rx_buffer[a]=0;
+	  }
 
 }
 //__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_1,100);
@@ -155,7 +203,7 @@ if(HAL_GPIO_ReadPin(B8_GPIO_Port,B8_Pin)&&buttonone) //Motor rotate at 75% duty 
 {
 	/*__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_1,100);
 	HAL_Delay(1000);*/
-	__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_1,100);
+	__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,100);
 	buttonone=false;
 			//__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_2,75); //Second motor 75% voltage//Second motor 75% voltage
 
@@ -168,7 +216,7 @@ buttonone=true;
 }
 if(HAL_GPIO_ReadPin(B7_GPIO_Port,B7_Pin)&&buttontwo) //Motor rotate at 50% duty cycle
 		{
-			__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_1,0);
+			__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,0);
 			buttontwo=false;//Second motor 50% voltage
 			//__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_2,50); //Second motor 50% voltage
 		}
@@ -181,9 +229,9 @@ buttontwo=true;
 
 if(HAL_GPIO_ReadPin(B6_GPIO_Port,B6_Pin)&&buttonthree) //Motor rotate at 25% duty cycle
 		{
-			__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_1,100);
+			__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,100);
 			HAL_Delay(1000);
-			__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_1,50);
+			__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,50);
 			buttonthree=false;//Second motor 25% voltage
 			//__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_2,25); //Second motor 25% voltage
 		}
@@ -219,7 +267,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 4;
-  RCC_OscInitStruct.PLL.PLLN = 64;
+  RCC_OscInitStruct.PLL.PLLN = 84;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 4;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -232,11 +280,11 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV128;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -261,9 +309,9 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 15;
+  htim2.Init.Prescaler = 83;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 99;
+  htim2.Init.Period = 19999;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
@@ -292,6 +340,88 @@ static void MX_TIM2_Init(void)
 }
 
 /**
+  * @brief TIM5 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM5_Init(void)
+{
+
+  /* USER CODE BEGIN TIM5_Init 0 */
+
+  /* USER CODE END TIM5_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM5_Init 1 */
+
+  /* USER CODE END TIM5_Init 1 */
+  htim5.Instance = TIM5;
+  htim5.Init.Prescaler = 8399;
+  htim5.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim5.Init.Period = 99;
+  htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim5.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_PWM_Init(&htim5) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim5, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim5, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM5_Init 2 */
+
+  /* USER CODE END TIM5_Init 2 */
+  HAL_TIM_MspPostInit(&htim5);
+
+}
+
+/**
+  * @brief USART6 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART6_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART6_Init 0 */
+
+  /* USER CODE END USART6_Init 0 */
+
+  /* USER CODE BEGIN USART6_Init 1 */
+
+  /* USER CODE END USART6_Init 1 */
+  huart6.Instance = USART6;
+  huart6.Init.BaudRate = 9600;
+  huart6.Init.WordLength = UART_WORDLENGTH_8B;
+  huart6.Init.StopBits = UART_STOPBITS_1;
+  huart6.Init.Parity = UART_PARITY_NONE;
+  huart6.Init.Mode = UART_MODE_TX_RX;
+  huart6.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart6.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart6) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART6_Init 2 */
+
+  /* USER CODE END USART6_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -303,6 +433,7 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
@@ -315,8 +446,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : B6_Pin B7_Pin B8_Pin B9_Pin */
-  GPIO_InitStruct.Pin = B6_Pin|B7_Pin|B8_Pin|B9_Pin;
+  /*Configure GPIO pins : B6_Pin B7_Pin B8_Pin */
+  GPIO_InitStruct.Pin = B6_Pin|B7_Pin|B8_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);

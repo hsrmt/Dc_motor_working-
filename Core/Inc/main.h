@@ -69,8 +69,6 @@ void Error_Handler(void);
 #define B7_GPIO_Port GPIOB
 #define B8_Pin GPIO_PIN_8
 #define B8_GPIO_Port GPIOB
-#define B9_Pin GPIO_PIN_9
-#define B9_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
