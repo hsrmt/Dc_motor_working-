@@ -47,7 +47,7 @@ TIM_HandleTypeDef htim5;
 UART_HandleTypeDef huart6;
 
 /* USER CODE BEGIN PV */
-int i=1500;
+int i=500;
 uint8_t a;
 char rx_buffer[50],tx_buffer[50];
  bool goingforward,buttonone,buttontwo,buttonthree,clockwise=true;
@@ -66,7 +66,8 @@ static void MX_TIM5_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+int min(int a,int b);
+int max(int x,int y);
 /* USER CODE END 0 */
 
 /**
@@ -153,9 +154,15 @@ else if(rx_buffer[0] == 'B')
 else if(rx_buffer[0] == 'L')
 {
 	 //for (i=500;i<=2500;i++)
-	 i+=20;
-		  __HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_1,i);
+	//i = min(i+100,2500);
+
+	i = min(i+200,2500);
+	 //i+=200;
+	//if(i>=2500)
+		//  i=2500;
+		__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_1,i);
 		  HAL_Delay(.1);
+
 	 // }
 	  if(led_state!=true)
 	  HAL_UART_Transmit(&huart6,(uint8_t*)tx_buffer,sprintf(tx_buffer,"Led is on\n"),500);
@@ -168,7 +175,11 @@ else if(rx_buffer[0] == 'L')
 else if(rx_buffer[0]=='R') {
 	// for (i=2500;i>=500;i--)
 	 // {
-	  	 i-=20;
+	  	 //i-=200;
+		// i+=500;
+		//if(i<=500)
+			 // i=500;
+	i=max(i-200,500);
 		  __HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_1,i);
 		  HAL_Delay(.01);
 		  //testing
@@ -182,6 +193,123 @@ else if(rx_buffer[0]=='R') {
 	  }
 
 }
+else if(rx_buffer[0]=='1') //Motor rotate at 75% duty cycle
+{
+
+	__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,100);
+	HAL_Delay(500);
+	__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,0);
+	  for(a=0;a<50;a++)
+	  {
+		  rx_buffer[a]=0;
+	  }
+
+	//buttonone=false;
+	//__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_2,75); *///Second motor 75% voltage//Second motor 75% voltage
+
+}
+else if(rx_buffer[0]=='2')
+	  {
+	__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,100);
+	HAL_Delay(500);
+	__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,20);
+	  for(a=0;a<50;a++)
+	  {
+		  rx_buffer[a]=0;
+	  }
+
+
+}
+else if(rx_buffer[0]=='3')
+	  {
+	__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,100);
+	HAL_Delay(500);
+	__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,30);
+	  for(a=0;a<50;a++)
+	  {
+		  rx_buffer[a]=0;
+	  }
+
+
+}
+else if(rx_buffer[0]=='4')
+	  {
+	__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,100);
+	HAL_Delay(500);
+	__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,40);
+	  for(a=0;a<50;a++)
+	  {
+		  rx_buffer[a]=0;
+	  }
+
+
+}
+else if(rx_buffer[0]=='5')
+	  {
+	__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,100);
+	HAL_Delay(500);
+	__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,50);
+	  for(a=0;a<50;a++)
+	  {
+		  rx_buffer[a]=0;
+	  }
+
+}
+else if(rx_buffer[0]=='6')
+	  {
+	__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,100);
+	HAL_Delay(500);
+	__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,60);
+	  for(a=0;a<50;a++)
+	  {
+		  rx_buffer[a]=0;
+	  }
+
+}
+else if(rx_buffer[0]=='7')
+	  {
+	__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,100);
+	HAL_Delay(500);
+	__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,70);
+	  for(a=0;a<50;a++)
+	  {
+		  rx_buffer[a]=0;
+	  }
+
+}
+else if(rx_buffer[0]=='8')
+	  {
+	__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,100);
+	HAL_Delay(500);
+	__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,80);
+	  for(a=0;a<50;a++)
+	  {
+		  rx_buffer[a]=0;
+	  }
+
+}
+else if(rx_buffer[0]=='9')
+	  {
+	__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,100);
+	HAL_Delay(500);
+	__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,90);
+	  for(a=0;a<50;a++)
+	  {
+		  rx_buffer[a]=0;
+	  }
+
+}
+else if(rx_buffer[0]=='q')
+	  {
+	__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,100);
+	HAL_Delay(500);
+	  for(a=0;a<50;a++)
+	  {
+		  rx_buffer[a]=0;
+	  }
+
+	  }
+
 //__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_1,100);
 /*
 if(clockwise){
@@ -231,7 +359,7 @@ if(HAL_GPIO_ReadPin(B6_GPIO_Port,B6_Pin)&&buttonthree) //Motor rotate at 25% dut
 		{
 			__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,100);
 			HAL_Delay(1000);
-			__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,50);
+			__HAL_TIM_SET_COMPARE(&htim5,TIM_CHANNEL_1,25);
 			buttonthree=false;//Second motor 25% voltage
 			//__HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_2,25); //Second motor 25% voltage
 		}
@@ -455,7 +583,14 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+int min(int a,int b)
+{
+	return (a>b)?b:a;
+}
+int max(int x,int y)
+{
+	return (x<y)?y:x;
+}
 /* USER CODE END 4 */
 
 /**
